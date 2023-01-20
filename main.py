@@ -1,0 +1,3 @@
+import agent
+
+agent.train()
