@@ -11,6 +11,7 @@ from model import LinearQNet, DEVICE
 POPULATION_SIZE = 100
 MUTATION_RATE = 0.5
 CROSSOVER_RATE = 0.2
+GENERATION_SIZE = 1000
 
 
 class Agent:
@@ -158,7 +159,7 @@ def train():
     else:
         population = [LinearQNet(28, 8, 4) for _ in range(POPULATION_SIZE)]
 
-    while True:
+    while GENERATION_SIZE > generations:
         # Evaluate the fitness of each individual
         fitness = [snake_ai(model) for model in population]
 
@@ -176,6 +177,3 @@ def train():
         print(f'Generation: {generations} Top_Score: {np.floor(fitness[0])}')
         generations += 1
 
-
-if __name__ == '__main__':
-    train()
