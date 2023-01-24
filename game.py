@@ -73,8 +73,8 @@ class Game:
         else:
             self.snake.position.pop()
 
-        # self.update_ui()
-        # self.clock.tick(SPEED)
+        self.update_ui()
+        self.clock.tick(SPEED)
 
         return reward, game_over, self.score, self.steps
 
@@ -106,7 +106,6 @@ class Game:
 
         self.update_ui()
         self.clock.tick(SPEED)
-        print(self.collision(0, 'food'))
 
     def update_ui(self):
         self.display.fill(WHITE)

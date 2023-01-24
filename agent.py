@@ -8,9 +8,9 @@ from gameTrainer import Direction, GameTrainer
 from helper import plot
 from model import LinearQNet, DEVICE
 
-MAX_MEMORY = 100_000
-BATCH_SIZE = 1000
-LR = 0.001
+POPULATION_SIZE = 100
+MUTATION_RATE = 0.5
+CROSSOVER_RATE = 0.2
 
 
 class Agent:
@@ -74,8 +74,8 @@ def evaluate(score, steps):
 
 
 def snake_ai(model):
-    agent = Agent(model)
     game = GameTrainer()
+    agent = Agent(model)
     while True:
         # get old state
         state_old = agent.get_state(game)
@@ -94,13 +94,13 @@ def snake_ai(model):
             return fitness
 
 
-def select_parents(population, fitness, crossover_rate):
-    population_size = int(len(population) * crossover_rate)
+def select_parents(population, fitness):
+    population_size = int(len(population) * CROSSOVER_RATE)
     population_fitness = list(zip(population, fitness))
     population_fitness.sort(key=lambda x: x[1], reverse=True)
     population_fitness = [x for x in population_fitness if x[1] != 0]
     if population_fitness is None or len(population_fitness) < 2:
-        return [LinearQNet(28, 8, 4) for _ in range(500)]
+        return [LinearQNet(28, 8, 4) for _ in range(POPULATION_SIZE)]
     population, fitness = zip(*population_fitness)
     if len(population) > population_size:
         elite = list(population)[:population_size]
@@ -122,21 +122,21 @@ def crossover(parent1, parent2):
     return child
 
 
-def mutation(child, mutation_rate):
+def mutation(child):
     for param in child.parameters():
-        if random.random() < mutation_rate:
+        if random.random() < MUTATION_RATE:
             noise = torch.randn_like(param) * 0.3
             param.data += noise
     return child
 
 
-def crossover_and_mutation(parents, mutation_rate, population_size):
+def crossover_and_mutation(parents):
     children = parents.copy()
-    for _ in range(population_size - len(parents)):
+    for _ in range(POPULATION_SIZE - len(parents)):
         parent1 = parents[random.randint(0, len(parents) - 1)]
         parent2 = parents[random.randint(0, len(parents) - 1)]
         child_crossover = crossover(parent1, parent2)
-        child_mutation = mutation(child_crossover, mutation_rate)
+        child_mutation = mutation(child_crossover)
         children.append(child_mutation)
     for idx in range(len(children)):
         children[idx].save(file_name=f'model{idx + 1}.pth')
@@ -144,33 +144,29 @@ def crossover_and_mutation(parents, mutation_rate, population_size):
 
 
 def train():
-    population_size = 100
-    mutation_rate = 0.5
-    crossover_rate = 0.2
-    num_generations = 1000
     scores = []
     mean_scores = []
     generations = 0
 
-    model_folder_path = './model/'
+    model_folder_path = './model'
     population = []
     if os.path.exists(model_folder_path):
         for i in os.listdir(model_folder_path):
             model = LinearQNet(28, 8, 4)
-            model.load_state_dict(torch.load(model_folder_path + i))
+            model.load_state_dict(torch.load(os.path.join(model_folder_path, i)))
             population.append(model)
     else:
-        population = [LinearQNet(28, 8, 4) for _ in range(population_size)]
+        population = [LinearQNet(28, 8, 4) for _ in range(POPULATION_SIZE)]
 
     while True:
         # Evaluate the fitness of each individual
         fitness = [snake_ai(model) for model in population]
 
         # Select the individuals for crossover
-        parents = select_parents(population, fitness, crossover_rate)
+        parents = select_parents(population, fitness)
 
         # Crossover and mutation
-        population = crossover_and_mutation(parents, mutation_rate, population_size)
+        population = crossover_and_mutation(parents)
 
         fitness.sort(reverse=True)
         scores.append(np.floor(fitness[0]))
