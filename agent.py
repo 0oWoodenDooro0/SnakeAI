@@ -126,7 +126,7 @@ def crossover(parent1, parent2):
 def mutation(child):
     for param in child.parameters():
         if random.random() < MUTATION_RATE:
-            noise = torch.randn_like(param) * 0.3
+            noise = torch.randn_like(param) * 0.1
             param.data += noise
     return child
 
