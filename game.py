@@ -1,6 +1,6 @@
 import random
 from collections import namedtuple
-from enum import Enum
+from enum import IntEnum
 
 import pygame
 
@@ -8,7 +8,7 @@ pygame.init()
 font = pygame.font.Font('arial.ttf', 25)
 
 
-class Direction(Enum):
+class Direction(IntEnum):
     RIGHT = 1
     DOWN = 2
     LEFT = 3
