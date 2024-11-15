@@ -1,22 +1,4 @@
-import random
-from collections import namedtuple
-from enum import Enum
-
-
-class Direction(Enum):
-    RIGHT = 1
-    DOWN = 2
-    LEFT = 3
-    UP = 4
-
-
-Point = namedtuple('Point', 'x, y')
-
-W = 20
-H = 20
-BLOCK_SIZE = 20
-WEIGHT = W * BLOCK_SIZE
-HEIGHT = H * BLOCK_SIZE
+from game import Snake, Food, Direction, Point, BLOCK_SIZE, WEIGHT, HEIGHT
 
 
 class GameTrainer:
@@ -36,9 +18,13 @@ class GameTrainer:
     def step_by_pygame(self, action):
         self.steps += 1
 
-        direction = [Direction.RIGHT, Direction.DOWN, Direction.LEFT, Direction.UP]
-        new_dir = direction[action.index(1)] if self.snake.direction != direction[(action.index(1) + 2) % 4] else self.snake.direction
-        self.snake.move(new_dir)
+        if action[0] == 1:
+            self.snake.move()
+        else:
+            direction = [Direction.RIGHT, Direction.DOWN, Direction.LEFT, Direction.UP]
+            new_dir = direction[action.index(1) - 1] if self.snake.direction != direction[
+                (action.index(1) + 1) % 4] else self.snake.direction
+            self.snake.move(new_dir)
 
         reward = 0
         game_over = False
@@ -91,54 +77,3 @@ class GameTrainer:
                     return n / (BLOCK_SIZE - 1)
             n += 1
         return 0
-
-
-class Snake:
-    def __init__(self):
-        self.position = None
-        self.head = None
-        self.direction = None
-
-    def reset(self):
-        self.direction = Direction.RIGHT
-        self.head = Point(WEIGHT / 2, HEIGHT / 2)
-        self.position = [self.head]
-
-    def move(self, direction):
-        self.direction = direction
-        x = self.head.x
-        y = self.head.y
-
-        if direction == Direction.RIGHT:
-            x += BLOCK_SIZE
-        elif direction == Direction.LEFT:
-            x -= BLOCK_SIZE
-        elif direction == Direction.UP:
-            y -= BLOCK_SIZE
-        elif direction == Direction.DOWN:
-            y += BLOCK_SIZE
-
-        self.head = Point(x, y)
-        self.position.insert(0, self.head)
-
-    def is_collision(self, pt=None):
-        if pt is None:
-            pt = self.head
-        if pt.x > WEIGHT - BLOCK_SIZE or pt.x < 0 or pt.y > HEIGHT - BLOCK_SIZE or pt.y < 0:
-            return True
-        if pt in self.position[1:]:
-            return True
-        return False
-
-
-class Food:
-    def __init__(self):
-        self.position = None
-
-    def place(self, snake):
-        while True:
-            x = random.randint(0, (WEIGHT - BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE
-            y = random.randint(0, (HEIGHT - BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE
-            if Point(x, y) not in snake:
-                self.position = Point(x, y)
-                break
