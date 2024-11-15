@@ -70,7 +70,7 @@ class GameTrainer:
         return fitness, game_over, self.score, self.steps
 
     def fitness(self):
-        return self.score + self.steps * 0.1 / len(self.snake.position)
+        return self.score + self.steps * 0.01 / len(self.snake.position)
 
     def collision(self, direction, obj):
         pt = self.snake.head

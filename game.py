@@ -118,7 +118,7 @@ class Game:
         return fitness, game_over, self.score, self.steps
 
     def fitness(self):
-        return self.score + self.steps * 0.1 / len(self.snake.position)
+        return self.score + self.steps * 0.01 / len(self.snake.position)
 
     def human_step(self):
         direction = self.snake.direction
