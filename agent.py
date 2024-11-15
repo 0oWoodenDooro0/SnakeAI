@@ -292,7 +292,7 @@ def train(model: keras.Sequential, game_state: GameState, observe=False):
     D = load_obj("D")
     do_nothing = np.zeros(ACTIONS)
     do_nothing[1] = 1
-    s_t, reward, terminal, score, steps = game_state.get_state(do_nothing)
+    s_t, f_t, terminal, score, steps = game_state.get_state(do_nothing)
     initial_state = s_t
     if observe:
         OBSERVE = 999999999
@@ -311,7 +311,6 @@ def train(model: keras.Sequential, game_state: GameState, observe=False):
         loss = 0
         Q_sa = 0
         action_index = 0
-        r_t = 0
         a_t = np.zeros([ACTIONS])
 
         if t % FRAMES_PER_ACTION == 0:
@@ -328,8 +327,9 @@ def train(model: keras.Sequential, game_state: GameState, observe=False):
         if epsilon > FINAL_EPSILON and t > OBSERVE:
             epsilon -= (INITIAL_EPSILON - FINAL_EPSILON) / EXPLORE
 
-        s_t1, r_t, terminal, score, steps = game_state.get_state(a_t)
-        D.append((s_t, action_index, r_t, s_t1, terminal))
+        s_t1, f_t1, terminal, score, steps = game_state.get_state(a_t)
+        fitness = f_t1 - f_t
+        D.append((s_t, action_index, fitness, s_t1, terminal))
         if len(D) > REPLAY_MEMORY_SIZE:
             D.popleft()
 
@@ -341,16 +341,16 @@ def train(model: keras.Sequential, game_state: GameState, observe=False):
             for i in range(len(minibatch)):
                 state_t = minibatch[i][0]
                 action_t = minibatch[i][1]
-                reward_t = minibatch[i][2]
+                fitness_t = minibatch[i][2]
                 state_t1 = minibatch[i][3]
                 terminal = minibatch[i][4]
                 inputs[i:i + 1] = state_t
                 targets[i] = model.predict(state_t)
                 Q_sa = model.predict(state_t1)
                 if terminal:
-                    targets[i, action_t] = reward_t
+                    targets[i, action_t] = fitness_t
                 else:
-                    targets[i, action_t] = reward_t + GAMMA * np.max(Q_sa)
+                    targets[i, action_t] = fitness_t + GAMMA * np.max(Q_sa)
 
             loss += model.train_on_batch(inputs, targets)
             loss_df.loc[len(loss_df)] = loss
@@ -358,6 +358,7 @@ def train(model: keras.Sequential, game_state: GameState, observe=False):
             scores_df.loc[len(scores_df)] = score
 
         s_t = initial_state if terminal else s_t1
+        f_t = 0 if terminal else f_t1
         if terminal:
             game_state.game.reset()
         t = t + 1
@@ -380,14 +381,8 @@ def train(model: keras.Sequential, game_state: GameState, observe=False):
         else:
             state = "train"
 
-        fitness = evaluate(score, steps)
-
-        print("TIMESTEP", t, "/ STATE", state, "/ EPSILON", epsilon, "/ ACTION", action_index, "/ fitness", fitness,
+        print("TIMESTEP", t, "/ STATE", state, "/ EPSILON", epsilon, "/ ACTION", action_index, "/ fitness", f_t1,
               "/ Q_MAX ", np.max(Q_sa), "/ Loss ", loss)
-
-
-def evaluate(score, steps):
-    return score + 0.5 + (0.5 * (score - steps / (score + 1)) / (score + steps / (score + 1)))
 
 
 def play(show=False, observe=False):

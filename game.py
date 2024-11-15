@@ -98,24 +98,29 @@ class Game:
             new_dir = direction[self.snake.direction % 4]
         self.snake.move(new_dir)
 
-        reward = 0.1
         game_over = False
         if self.snake.is_collision() or self.steps > 100 * len(self.snake.position):
             game_over = True
-            reward = 0
-            return reward, game_over, self.score, self.steps
+            fitness = self.fitness()
+            return fitness, game_over, self.score, self.steps
 
         if self.snake.head == self.food.position:
             self.score += 1
-            reward = 1
             self.food.place(self.snake.position)
         else:
             self.snake.position.pop()
 
+        fitness = self.fitness()
+
         self.update_ui()
         self.clock.tick(SPEED)
 
-        return reward, game_over, self.score, self.steps
+        return fitness, game_over, self.score, self.steps
+
+    def fitness(self):
+        return self.score + 0.5 + (
+                0.5 * (self.score - self.steps / (self.score + 1)) / (self.score + self.steps / (self.score + 1)))
+
 
     def human_step(self):
         direction = self.snake.direction
