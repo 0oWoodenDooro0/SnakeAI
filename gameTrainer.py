@@ -26,15 +26,16 @@ class GameTrainer:
                 (action.index(1) + 1) % 4] else self.snake.direction
             self.snake.move(new_dir)
 
-        reward = 0
+        reward = 0.1
         game_over = False
         if self.snake.is_collision() or self.steps > 50 * len(self.snake.position):
             game_over = True
-            reward = -10
+            reward = 0
             return reward, game_over, self.score, self.steps
 
         if self.snake.head == self.food.position:
             self.score += 1
+            reward = 1
             self.food.place(self.snake.position)
         else:
             self.snake.position.pop()
