@@ -299,7 +299,7 @@ def train(model: keras.Sequential, game_state: GameState, observe=False):
         epsilon = FINAL_EPSILON
         model.load_weights("objects/model.weights.h5")
         adam = optimizers.Adam(learning_rate=LEARNING_RATE)
-        model.compile(loss='mse', optimizers=adam)
+        model.compile(loss='mse', optimizer=adam)
     else:
         OBSERVE = OBSERVATION
         epsilon = load_obj("epsilon")
