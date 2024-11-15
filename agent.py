@@ -328,8 +328,8 @@ def train(model: keras.Sequential, game_state: GameState, observe=False):
         if epsilon > FINAL_EPSILON and t > OBSERVE:
             epsilon -= (INITIAL_EPSILON - FINAL_EPSILON) / EXPLORE
 
-        s_t1, r_t, is_over, score, steps = game_state.get_state(a_t)
-        D.append((s_t, action_index, r_t, s_t1, is_over))
+        s_t1, r_t, terminal, score, steps = game_state.get_state(a_t)
+        D.append((s_t, action_index, r_t, s_t1, terminal))
         if len(D) > REPLAY_MEMORY_SIZE:
             D.popleft()
 
@@ -390,8 +390,11 @@ def evaluate(score, steps):
     return score + 0.5 + (0.5 * (score - steps / (score + 1)) / (score + steps / (score + 1)))
 
 
-def play(observe=False):
-    game = GameTrainer()
+def play(show=False, observe=False):
+    if show:
+        game = Game()
+    else:
+        game = GameTrainer()
     agent = Agent(game)
     game_state = GameState(game, agent)
     model = get_model()
