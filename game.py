@@ -93,9 +93,9 @@ class Game:
         direction = [Direction.RIGHT, Direction.DOWN, Direction.LEFT, Direction.UP]
         new_dir = self.snake.direction
         if action[0] == 1:
-            new_dir = direction[(self.snake.direction + 2) % 4]
+            new_dir = direction[(int(self.snake.direction) + 2) % 4]
         elif action[2] == 1:
-            new_dir = direction[self.snake.direction % 4]
+            new_dir = direction[int(self.snake.direction) % 4]
         self.snake.move(new_dir)
 
         game_over = False
