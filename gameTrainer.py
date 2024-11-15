@@ -42,7 +42,37 @@ class GameTrainer:
 
         return reward, game_over, self.score, self.steps
 
-    def collision(self, direction, obj, draw=False):
+    def step_by_agent(self, action):
+        self.steps += 1
+
+        direction = [Direction.RIGHT, Direction.DOWN, Direction.LEFT, Direction.UP]
+        new_dir = self.snake.direction
+        if action[0] == 1:
+            new_dir = direction[(self.snake.direction + 2) % 4]
+        elif action[2] == 1:
+            new_dir = direction[self.snake.direction % 4]
+        self.snake.move(new_dir)
+
+        reward = 0.1
+        game_over = False
+        if self.snake.is_collision() or self.steps > 100 * len(self.snake.position):
+            game_over = True
+            reward = 0
+            return reward, game_over, self.score, self.steps
+
+        if self.snake.head == self.food.position:
+            self.score += 1
+            reward = 1
+            self.food.place(self.snake.position)
+        else:
+            self.snake.position.pop()
+
+        self.update_ui()
+        self.clock.tick(SPEED)
+
+        return reward, game_over, self.score, self.steps
+
+    def collision(self, direction, obj):
         pt = self.snake.head
         n = 1
         while not self.snake.is_collision(pt):
@@ -65,13 +95,9 @@ class GameTrainer:
             if obj == 'snake':
                 for p in self.snake.position:
                     if p == pt:
-                        if draw:
-                            return pt
                         return (BLOCK_SIZE - n - 1) / (BLOCK_SIZE - 1)
             elif obj == 'food':
                 if pt == self.food.position:
-                    if draw:
-                        return pt
                     return (BLOCK_SIZE - n - 1) / (BLOCK_SIZE - 1)
             elif obj == 'wall':
                 if pt.x > WEIGHT - BLOCK_SIZE or pt.x < 0 or pt.y > HEIGHT - BLOCK_SIZE or pt.y < 0:

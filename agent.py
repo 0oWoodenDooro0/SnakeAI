@@ -198,7 +198,7 @@ class Agent:
         self.game = game
 
     def action(self, action):
-        return self.game.step_by_pygame(action.tolist())
+        return self.game.step_by_agent(action.tolist())
 
 
 class GameState:
@@ -252,7 +252,7 @@ scores_file_path = 'objects/scores.csv'
 actions_file_path = 'objects/actions.csv'
 q_values_file_path = 'objects/q_values.csv'
 
-ACTIONS = 5
+ACTIONS = 3
 GAMMA = 0.99
 OBSERVATION = 100
 EXPLORE = 100000
@@ -291,7 +291,7 @@ def init_cache():
 def train(model: keras.Sequential, game_state: GameState, observe=False):
     D = load_obj("D")
     do_nothing = np.zeros(ACTIONS)
-    do_nothing[0] = 1
+    do_nothing[1] = 1
     s_t, reward, terminal, score, steps = game_state.get_state(do_nothing)
     initial_state = s_t
     if observe:

@@ -83,6 +83,40 @@ class Game:
 
         return reward, game_over, self.score, self.steps
 
+    def step_by_agent(self, action):
+        self.steps += 1
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+
+        direction = [Direction.RIGHT, Direction.DOWN, Direction.LEFT, Direction.UP]
+        new_dir = self.snake.direction
+        if action[0] == 1:
+            new_dir = direction[(self.snake.direction + 2) % 4]
+        elif action[2] == 1:
+            new_dir = direction[self.snake.direction % 4]
+        self.snake.move(new_dir)
+
+        reward = 0.1
+        game_over = False
+        if self.snake.is_collision() or self.steps > 100 * len(self.snake.position):
+            game_over = True
+            reward = 0
+            return reward, game_over, self.score, self.steps
+
+        if self.snake.head == self.food.position:
+            self.score += 1
+            reward = 1
+            self.food.place(self.snake.position)
+        else:
+            self.snake.position.pop()
+
+        self.update_ui()
+        self.clock.tick(SPEED)
+
+        return reward, game_over, self.score, self.steps
+
     def human_step(self):
         direction = self.snake.direction
         for event in pygame.event.get():
