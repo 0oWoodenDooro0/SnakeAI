@@ -209,42 +209,24 @@ class GameState:
     def get_state(self, actions):
         reward, is_over, score, steps = self.agent.action(actions)
         state = [
-            # Wall location
-            self.game.collision(0, 'wall'),
-            self.game.collision(1, 'wall'),
-            self.game.collision(2, 'wall'),
-            self.game.collision(3, 'wall'),
-            self.game.collision(4, 'wall'),
-            self.game.collision(5, 'wall'),
-            self.game.collision(6, 'wall'),
-            self.game.collision(7, 'wall'),
-
-            # Snake location
-            self.game.collision(2, 'snake'),
-            self.game.collision(3, 'snake'),
-            self.game.collision(0, 'snake'),
-            self.game.collision(1, 'snake'),
-            self.game.collision(6, 'snake'),
-            self.game.collision(7, 'snake'),
-            self.game.collision(4, 'snake'),
-            self.game.collision(5, 'snake'),
+            # danger
+            self.game.check_danger(Direction.RIGHT),
+            self.game.check_danger(Direction.UP),
+            self.game.check_danger(Direction.LEFT),
+            self.game.check_danger(Direction.DOWN),
 
             # Food location
-            self.game.collision(2, 'food'),
-            self.game.collision(3, 'food'),
-            self.game.collision(0, 'food'),
-            self.game.collision(1, 'food'),
-            self.game.collision(6, 'food'),
-            self.game.collision(7, 'food'),
-            self.game.collision(4, 'food'),
-            self.game.collision(5, 'food'),
+            self.game.check_food(Direction.RIGHT),
+            self.game.check_food(Direction.UP),
+            self.game.check_food(Direction.LEFT),
+            self.game.check_food(Direction.DOWN),
 
             self.game.snake.direction == Direction.RIGHT,
             self.game.snake.direction == Direction.UP,
             self.game.snake.direction == Direction.LEFT,
             self.game.snake.direction == Direction.DOWN
         ]
-        return np.reshape(np.array(state, dtype=float), (1, 28)), reward, is_over, score, steps
+        return np.reshape(np.array(state, dtype=float), (1, 12)), reward, is_over, score, steps
 
 
 loss_file_path = 'objects/loss.csv'
@@ -254,14 +236,14 @@ q_values_file_path = 'objects/q_values.csv'
 
 ACTIONS = 3
 GAMMA = 0.99
-OBSERVATION = 100
-EXPLORE = 100000
+OBSERVATION = 500
+EXPLORE = 10000
 FINAL_EPSILON = 0.0001
 INITIAL_EPSILON = 0.1
 REPLAY_MEMORY_SIZE = 50000
 BATCH_SIZE = 16
 FRAMES_PER_ACTION = 1
-LEARNING_RATE = 1e-3
+LEARNING_RATE = 1e-4
 
 loss_df = pd.read_csv(loss_file_path) if os.path.isfile(loss_file_path) else pd.DataFrame(columns=['loss'])
 scores_df = pd.read_csv(scores_file_path) if os.path.isfile(loss_file_path) else pd.DataFrame(columns=['scores'])
@@ -382,7 +364,7 @@ def train(model: keras.Sequential, game_state: GameState, observe=False):
             state = "train"
 
         print("TIMESTEP", t, "/ STATE", state, "/ EPSILON", epsilon, "/ ACTION", action_index, "/ fitness", f_t1,
-              "/ Q_MAX ", np.max(Q_sa), "/ Loss ", loss)
+              "/ score", score, "/ Q_MAX ", "/ steps", steps, np.max(Q_sa), "/ Loss ", loss)
 
 
 def play(show=False, observe=False):

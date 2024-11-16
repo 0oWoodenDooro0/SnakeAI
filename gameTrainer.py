@@ -3,16 +3,16 @@ from game import Snake, Food, Direction, Point, BLOCK_SIZE, WEIGHT, HEIGHT
 
 class GameTrainer:
     def __init__(self):
-        self.score = None
+        self.score = 0
+        self.steps = 0
         self.snake = Snake()
         self.food = Food()
-        self.steps = 0
         self.reset()
 
     def reset(self):
         self.steps = 0
-        self.snake.reset()
         self.score = 0
+        self.snake.reset()
         self.food.place(self.snake.position)
 
     def step_by_pygame(self, action):
@@ -28,7 +28,7 @@ class GameTrainer:
 
         reward = 0.1
         game_over = False
-        if self.snake.is_collision() or self.steps > 50 * len(self.snake.position):
+        if self.snake.is_collision() or self.steps > 20 * pow(len(self.snake.position), 1.2):
             game_over = True
             reward = 0
             return reward, game_over, self.score, self.steps
@@ -54,7 +54,7 @@ class GameTrainer:
         self.snake.move(new_dir)
 
         game_over = False
-        if self.snake.is_collision() or self.steps > 100 * len(self.snake.position):
+        if self.snake.is_collision() or self.steps > 20 * pow(len(self.snake.position), 1.2):
             game_over = True
             fitness = self.fitness()
             return fitness, game_over, self.score, self.steps
@@ -104,3 +104,50 @@ class GameTrainer:
                     return n / (BLOCK_SIZE - 1)
             n += 1
         return 0
+
+    def check_food(self, direction):
+        match direction:
+            case Direction.RIGHT:
+                if self.food.position.x > self.snake.head.x:
+                    return True
+                else:
+                    return False
+            case Direction.LEFT:
+                if self.food.position.x < self.snake.head.x:
+                    return True
+                else:
+                    return False
+            case Direction.DOWN:
+                if self.food.position.y > self.snake.head.y:
+                    return True
+                else:
+                    return False
+            case Direction.UP:
+                if self.food.position.y < self.snake.head.y:
+                    return True
+                else:
+                    return False
+
+    def check_danger(self, direction):
+        match direction:
+            case Direction.RIGHT:
+                if self.snake.head.x > WEIGHT - BLOCK_SIZE: return True
+                for body in self.snake.position:
+                    if Point(self.snake.head.x + BLOCK_SIZE, self.snake.head.y) == body:
+                        return True
+            case Direction.LEFT:
+                if self.snake.head.x < 0: return True
+                for body in self.snake.position:
+                    if Point(self.snake.head.x - BLOCK_SIZE, self.snake.head.y) == body:
+                        return True
+            case Direction.DOWN:
+                if self.snake.head.y > HEIGHT - BLOCK_SIZE: return True
+                for body in self.snake.position:
+                    if Point(self.snake.head.x, self.snake.head.y + BLOCK_SIZE) == body:
+                        return True
+            case Direction.UP:
+                if self.snake.head.y < 0: return True
+                for body in self.snake.position:
+                    if Point(self.snake.head.x, self.snake.head.y - BLOCK_SIZE) == body:
+                        return True
+        return False

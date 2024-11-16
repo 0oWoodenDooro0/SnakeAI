@@ -34,13 +34,13 @@ SPEED = 20
 
 class Game:
     def __init__(self):
-        self.score = None
+        self.score = 0
+        self.steps = 0
         self.display = pygame.display.set_mode((WEIGHT, HEIGHT))
         pygame.display.set_caption('Snake')
         self.clock = pygame.time.Clock()
         self.snake = Snake()
         self.food = Food()
-        self.steps = 0
         self.reset()
 
     def reset(self):
@@ -66,7 +66,7 @@ class Game:
 
         reward = 0.1
         game_over = False
-        if self.snake.is_collision() or self.steps > 100 * len(self.snake.position):
+        if self.snake.is_collision() or self.steps > 20 * pow(len(self.snake.position), 1.2):
             game_over = True
             reward = 0
             return reward, game_over, self.score, self.steps
@@ -99,7 +99,7 @@ class Game:
         self.snake.move(new_dir)
 
         game_over = False
-        if self.snake.is_collision() or self.steps > 100 * len(self.snake.position):
+        if self.snake.is_collision() or self.steps > 20 * pow(len(self.snake.position), 1.2):
             game_over = True
             fitness = self.fitness()
             return fitness, game_over, self.score, self.steps
@@ -240,6 +240,46 @@ class Game:
     # def draw(self, pt):
     #     pygame.draw.rect(self.display, BLUE2, pygame.Rect(pt.x, pt.y, BLOCK_SIZE, BLOCK_SIZE))
     #     pygame.display.flip()
+
+    def check_food(self, direction):
+        match direction:
+            case Direction.RIGHT:
+                if self.food.position.x > self.snake.head.x:
+                    return True
+            case Direction.LEFT:
+                if self.food.position.x < self.snake.head.x:
+                    return True
+            case Direction.DOWN:
+                if self.food.position.y > self.snake.head.y:
+                    return True
+            case Direction.UP:
+                if self.food.position.y < self.snake.head.y:
+                    return True
+        return False
+
+    def check_danger(self, direction):
+        match direction:
+            case Direction.RIGHT:
+                if self.snake.head.x > WEIGHT - BLOCK_SIZE: return True
+                for body in self.snake.position:
+                    if Point(self.snake.head.x + BLOCK_SIZE, self.snake.head.y) == body:
+                        return True
+            case Direction.LEFT:
+                if self.snake.head.x < 0: return True
+                for body in self.snake.position:
+                    if Point(self.snake.head.x - BLOCK_SIZE, self.snake.head.y) == body:
+                        return True
+            case Direction.DOWN:
+                if self.snake.head.y > HEIGHT - BLOCK_SIZE: return True
+                for body in self.snake.position:
+                    if Point(self.snake.head.x, self.snake.head.y + BLOCK_SIZE) == body:
+                        return True
+            case Direction.UP:
+                if self.snake.head.y < 0: return True
+                for body in self.snake.position:
+                    if Point(self.snake.head.x, self.snake.head.y - BLOCK_SIZE) == body:
+                        return True
+        return False
 
 
 class Snake:
