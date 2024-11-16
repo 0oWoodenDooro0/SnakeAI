@@ -283,6 +283,8 @@ class Game:
         screen = np.zeros(shape=(H, W), dtype=float)
         screen[:] = 0.5
         for body in self.snake.position:
-            screen[body.y, body.x] = 1
-        screen[self.food.position.y, self.food.position.x] = 0
+            if body.x < 0 or body.x >= W or body.y < 0 or body.y >= H:
+                continue
+            screen[int(body.y), int(body.x)] = 1
+        screen[int(self.food.position.y), int(self.food.position.x)] = 0
         return screen

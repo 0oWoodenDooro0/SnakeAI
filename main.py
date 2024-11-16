@@ -12,3 +12,6 @@ match (input()):
         agent.play(True, True)
     case "init":
         agent.init_cache()
+        agent.play()
+    case "test":
+        agent.play(True, False)

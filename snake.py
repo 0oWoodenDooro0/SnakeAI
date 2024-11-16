@@ -36,7 +36,7 @@ class Snake:
     def is_collision(self, pt=None):
         if pt is None:
             pt = self.head
-        if pt.x > W or pt.x < 0 or pt.y > H or pt.y < 0:
+        if pt.x >= W or pt.x < 0 or pt.y >= H or pt.y < 0:
             return True
         if pt in self.position[1:]:
             return True
