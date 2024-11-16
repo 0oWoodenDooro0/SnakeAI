@@ -1,6 +1,8 @@
-from food import Food
+import numpy as np
+
 from direction import Direction
 from enviroment import W, H
+from food import Food
 from point import Point
 from snake import Snake
 
@@ -57,21 +59,21 @@ class GameTrainer:
             new_dir = direction[int(self.snake.direction) % 4]
         self.snake.move(new_dir)
 
+        reward = 0
         game_over = False
         if self.snake.is_collision():
             game_over = True
-            fitness = self.fitness()
-            return fitness, game_over, self.score, self.steps
+            reward = -1
+            return reward, game_over, self.score, self.steps
 
         if self.snake.head == self.food.position:
             self.score += 1
+            reward = 1
             self.food.place(self.snake.position)
         else:
             self.snake.position.pop()
 
-        fitness = self.fitness()
-
-        return fitness, game_over, self.score, self.steps
+        return reward, game_over, self.score, self.steps
 
     def fitness(self):
         return self.score + self.steps * 0.01 / len(self.snake.position)
@@ -152,3 +154,11 @@ class GameTrainer:
                     if Point(self.snake.head.x, self.snake.head.y - 1) == body:
                         return True
         return False
+
+    def get_screen(self):
+        screen = np.zeros(shape=(H, W), dtype=float)
+        screen[:] = 0.5
+        for body in self.snake.position:
+            screen[body.y][body.x] = 1
+        screen[self.food.position.y][self.food.position.x] = 0
+        return screen

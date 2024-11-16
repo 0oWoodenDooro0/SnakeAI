@@ -1,3 +1,4 @@
+import numpy as np
 import pygame
 
 from direction import Direction
@@ -19,6 +20,7 @@ WEIGHT = W * BLOCK_SIZE
 HEIGHT = H * BLOCK_SIZE
 EDGE = 2
 SPEED = 20
+
 
 class Game:
     def __init__(self):
@@ -87,23 +89,23 @@ class Game:
         self.snake.move(new_dir)
 
         game_over = False
+        reward = 0
         if self.snake.is_collision():
             game_over = True
-            fitness = self.fitness()
-            return fitness, game_over, self.score, self.steps
+            reward = -1
+            return reward, game_over, self.score, self.steps
 
         if self.snake.head == self.food.position:
             self.score += 1
+            reward = 1
             self.food.place(self.snake.position)
         else:
             self.snake.position.pop()
 
-        fitness = self.fitness()
-
         self.update_ui()
         self.clock.tick(SPEED)
 
-        return fitness, game_over, self.score, self.steps
+        return reward, game_over, self.score, self.steps
 
     def fitness(self):
         return self.score + self.steps * 0.01 / len(self.snake.position)
@@ -276,3 +278,11 @@ class Game:
                     if Point(self.snake.head.x, self.snake.head.y - 1) == body:
                         return True
         return False
+
+    def get_screen(self):
+        screen = np.zeros(shape=(H, W), dtype=float)
+        screen[:] = 0.5
+        for body in self.snake.position:
+            screen[body.y][body.x] = 1
+        screen[self.food.position.y][self.food.position.x] = 0
+        return screen

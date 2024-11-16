@@ -188,6 +188,7 @@ from keras import optimizers
 import numpy as np
 import pandas as pd
 
+from enviroment import H, W
 from game import Game
 from direction import Direction
 from gameTrainer import GameTrainer
@@ -209,25 +210,26 @@ class GameState:
 
     def get_state(self, actions):
         reward, is_over, score, steps = self.agent.action(actions)
-        state = [
-            # danger
-            self.game.check_danger(Direction.RIGHT),
-            self.game.check_danger(Direction.UP),
-            self.game.check_danger(Direction.LEFT),
-            self.game.check_danger(Direction.DOWN),
-
-            # Food location
-            self.game.check_food(Direction.RIGHT),
-            self.game.check_food(Direction.UP),
-            self.game.check_food(Direction.LEFT),
-            self.game.check_food(Direction.DOWN),
-
-            self.game.snake.direction == Direction.RIGHT,
-            self.game.snake.direction == Direction.UP,
-            self.game.snake.direction == Direction.LEFT,
-            self.game.snake.direction == Direction.DOWN
-        ]
-        return np.reshape(np.array(state, dtype=float), (1, 12)), reward, is_over, score, steps
+        # state = [
+        #     # danger
+        #     self.game.check_danger(Direction.RIGHT),
+        #     self.game.check_danger(Direction.UP),
+        #     self.game.check_danger(Direction.LEFT),
+        #     self.game.check_danger(Direction.DOWN),
+        #
+        #     # Food location
+        #     self.game.check_food(Direction.RIGHT),
+        #     self.game.check_food(Direction.UP),
+        #     self.game.check_food(Direction.LEFT),
+        #     self.game.check_food(Direction.DOWN),
+        #
+        #     self.game.snake.direction == Direction.RIGHT,
+        #     self.game.snake.direction == Direction.UP,
+        #     self.game.snake.direction == Direction.LEFT,
+        #     self.game.snake.direction == Direction.DOWN
+        # ]
+        state = self.agent.game.get_screen()
+        return state, reward, is_over, score, steps
 
 
 loss_file_path = 'objects/loss.csv'
@@ -246,7 +248,7 @@ BATCH_SIZE = 16
 FRAMES_PER_ACTION = 1
 LEARNING_RATE = 1e-3
 
-img_rows, img_cols = 10, 10
+img_rows, img_cols = H, W
 img_channels = 2
 
 loss_df = pd.read_csv(loss_file_path) if os.path.isfile(loss_file_path) else pd.DataFrame(columns=['loss'])
@@ -278,7 +280,9 @@ def train(model: keras.Sequential, game_state: GameState, observe=False):
     D = load_obj("D")
     do_nothing = np.zeros(ACTIONS)
     do_nothing[1] = 1
-    s_t, f_t, terminal, score, steps = game_state.get_state(do_nothing)
+    x_t, _, terminal, score, steps = game_state.get_state(do_nothing)
+    s_t = np.stack((x_t, x_t), axis=2)
+    s_t = s_t.reshape(1, s_t.shape[0], s_t.shape[1], s_t.shape[2])
     initial_state = s_t
     if observe:
         OBSERVE = 999999999
@@ -313,15 +317,16 @@ def train(model: keras.Sequential, game_state: GameState, observe=False):
         if epsilon > FINAL_EPSILON and t > OBSERVE:
             epsilon -= (INITIAL_EPSILON - FINAL_EPSILON) / EXPLORE
 
-        s_t1, f_t1, terminal, score, steps = game_state.get_state(a_t)
-        fitness = f_t1 - f_t
-        D.append((s_t, action_index, fitness, s_t1, terminal))
+        x_t1, r_t, terminal, score, steps = game_state.get_state(a_t)
+        x_t1 = x_t1.reshape(1, x_t1.shape[0], x_t1.shape[1], 1)
+        s_t1 = np.append(x_t1, s_t[:, :, :, :1], axis=3)
+        D.append((s_t, action_index, r_t, s_t1, terminal))
         if len(D) > REPLAY_MEMORY_SIZE:
             D.popleft()
 
         if t > OBSERVE:
             minibatch = random.sample(D, BATCH_SIZE)
-            inputs = np.zeros((BATCH_SIZE, s_t.shape[1]))
+            inputs = np.zeros((BATCH_SIZE, s_t.shape[1], s_t.shape[2], s_t.shape[3]))
             targets = np.zeros((inputs.shape[0], ACTIONS))
 
             for i in range(len(minibatch)):
@@ -330,9 +335,12 @@ def train(model: keras.Sequential, game_state: GameState, observe=False):
                 fitness_t = minibatch[i][2]
                 state_t1 = minibatch[i][3]
                 terminal = minibatch[i][4]
+
                 inputs[i:i + 1] = state_t
+
                 targets[i] = model.predict(state_t)
                 Q_sa = model.predict(state_t1)
+
                 if terminal:
                     targets[i, action_t] = fitness_t
                 else:
@@ -346,7 +354,6 @@ def train(model: keras.Sequential, game_state: GameState, observe=False):
         if steps > 20 * (t / 1000 + 1):
             terminal = True
         s_t = initial_state if terminal else s_t1
-        f_t = 0 if terminal else f_t1
         if terminal:
             game_state.game.reset()
         t = t + 1
@@ -369,7 +376,7 @@ def train(model: keras.Sequential, game_state: GameState, observe=False):
         else:
             state = "train"
 
-        print("TIMESTEP", t, "/ STATE", state, "/ EPSILON", epsilon, "/ ACTION", action_index, "/ fitness", f_t1,
+        print("TIMESTEP", t, "/ STATE", state, "/ EPSILON", epsilon, "/ ACTION", action_index, "/ reward", r_t,
               "/ score", score, "/ steps", steps, "/ Q_MAX ", np.max(Q_sa), "/ Loss ", loss)
 
 
