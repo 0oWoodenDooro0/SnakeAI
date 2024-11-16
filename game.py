@@ -1,38 +1,24 @@
-from collections import namedtuple
-from enum import IntEnum
-
 import pygame
 
+from direction import Direction
+from enviroment import W, H
 from food import Food
+from point import Point
 from snake import Snake
 
 pygame.init()
 font = pygame.font.Font('arial.ttf', 25)
-
-
-class Direction(IntEnum):
-    RIGHT = 1
-    DOWN = 2
-    LEFT = 3
-    UP = 4
-
-
-Point = namedtuple('Point', 'x, y')
 
 WHITE = (255, 255, 255)
 RED = (200, 0, 0)
 BLUE1 = (0, 0, 255)
 BLUE2 = (0, 100, 255)
 BLACK = (0, 0, 0)
-
-W = 20
-H = 20
 BLOCK_SIZE = 20
 WEIGHT = W * BLOCK_SIZE
 HEIGHT = H * BLOCK_SIZE
 EDGE = 2
 SPEED = 20
-
 
 class Game:
     def __init__(self):

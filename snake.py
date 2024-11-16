@@ -1,4 +1,6 @@
-from game import Direction, Point, H, W
+from direction import Direction
+from enviroment import W, H
+from point import Point
 
 
 class Snake:

@@ -188,7 +188,8 @@ from keras import optimizers
 import numpy as np
 import pandas as pd
 
-from game import Game, Direction
+from game import Game
+from direction import Direction
 from gameTrainer import GameTrainer
 from model import get_model
 

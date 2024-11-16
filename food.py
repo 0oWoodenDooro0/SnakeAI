@@ -1,6 +1,7 @@
 import random
 
-from game import Point, W, H
+from enviroment import W, H
+from point import Point
 
 
 class Food:

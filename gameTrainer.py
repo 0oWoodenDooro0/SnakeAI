@@ -1,5 +1,7 @@
 from food import Food
-from game import Direction, Point, BLOCK_SIZE, W, H
+from direction import Direction
+from enviroment import W, H
+from point import Point
 from snake import Snake
 
 
