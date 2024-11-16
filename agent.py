@@ -239,12 +239,12 @@ q_values_file_path = 'objects/q_values.csv'
 
 ACTIONS = 3
 GAMMA = 0.99
-OBSERVATION = 50
+OBSERVATION = 128
 EXPLORE = 100000
 FINAL_EPSILON = 0.0001
 INITIAL_EPSILON = 0.1
 REPLAY_MEMORY_SIZE = 50000
-BATCH_SIZE = 16
+BATCH_SIZE = 128
 FRAMES_PER_ACTION = 1
 LEARNING_RATE = 1e-3
 
@@ -284,6 +284,8 @@ def train(model: keras.Sequential, game_state: GameState, observe=False):
     s_t = np.stack((x_t, x_t), axis=2)
     s_t = s_t.reshape(1, s_t.shape[0], s_t.shape[1], s_t.shape[2])
     initial_state = s_t
+    best_score = 0
+    best_steps = 0
     if observe:
         OBSERVE = 999999999
         epsilon = FINAL_EPSILON
@@ -309,7 +311,7 @@ def train(model: keras.Sequential, game_state: GameState, observe=False):
                 action_index = random.randrange(ACTIONS)
                 a_t[action_index] = 1
             else:
-                q = model.predict(s_t)
+                q = model.predict(s_t, verbose=0)
                 max_q = np.argmax(q)
                 action_index = max_q
                 a_t[action_index] = 1
@@ -338,8 +340,8 @@ def train(model: keras.Sequential, game_state: GameState, observe=False):
 
                 inputs[i:i + 1] = state_t
 
-                targets[i] = model.predict(state_t)
-                Q_sa = model.predict(state_t1)
+                targets[i] = model.predict(state_t, verbose=0)
+                Q_sa = model.predict(state_t1, verbose=0)
 
                 if terminal:
                     targets[i, action_t] = fitness_t
@@ -351,12 +353,17 @@ def train(model: keras.Sequential, game_state: GameState, observe=False):
             q_values_df.loc[len(q_values_df)] = np.max(Q_sa)
             scores_df.loc[len(scores_df)] = score
 
-        if steps > 20 * (t / 1000 + 1):
+        if steps > 10 * (t / 2000 + 1):
             terminal = True
         s_t = initial_state if terminal else s_t1
         if terminal:
             game_state.game.reset()
         t = t + 1
+
+        if score > best_score:
+            best_score = score
+            best_steps = steps
+
         if t % 1000 == 0:
             print("Model Save")
             model.save_weights("objects/model.weights.h5", overwrite=True)
@@ -369,15 +376,16 @@ def train(model: keras.Sequential, game_state: GameState, observe=False):
             q_values_df.to_csv(q_values_file_path, index=False)
             with open("objects/model.json", "w") as file:
                 json.dump(model.to_json(), file)
-        if t <= OBSERVE:
-            state = "observe"
-        elif OBSERVE < t <= OBSERVE + EXPLORE:
-            state = "explore"
-        else:
-            state = "train"
 
-        print("TIMESTEP", t, "/ STATE", state, "/ EPSILON", epsilon, "/ ACTION", action_index, "/ reward", r_t,
-              "/ score", score, "/ steps", steps, "/ Q_MAX ", np.max(Q_sa), "/ Loss ", loss)
+            if t <= OBSERVE:
+                state = "observe"
+            elif OBSERVE < t <= OBSERVE + EXPLORE:
+                state = "explore"
+            else:
+                state = "train"
+
+            print("TIMESTEP", t, "/ STATE", state, "/ EPSILON", epsilon, "/ ACTION", action_index,
+                  "/ best score", best_score, "/ best steps", best_steps, "/ Loss ", loss)
 
 
 def play(show=False, observe=False):

@@ -32,7 +32,7 @@ class GameTrainer:
                 (action.index(1) + 1) % 4] else self.snake.direction
             self.snake.move(new_dir)
 
-        reward = 0.1
+        reward = -0.1
         game_over = False
         if self.snake.is_collision():
             game_over = True
@@ -59,7 +59,7 @@ class GameTrainer:
             new_dir = direction[int(self.snake.direction) % 4]
         self.snake.move(new_dir)
 
-        reward = 0
+        reward = -0.1
         game_over = False
         if self.snake.is_collision():
             game_over = True
