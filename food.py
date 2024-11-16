@@ -10,8 +10,8 @@ class Food:
 
     def place(self, snake):
         while True:
-            x = random.randint(0, W)
-            y = random.randint(0, H)
+            x = random.randint(0, W - 1)
+            y = random.randint(0, H - 1)
             if Point(x, y) not in snake:
                 self.position = Point(x, y)
                 break
