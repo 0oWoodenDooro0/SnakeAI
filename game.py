@@ -283,6 +283,6 @@ class Game:
         screen = np.zeros(shape=(H, W), dtype=float)
         screen[:] = 0.5
         for body in self.snake.position:
-            screen[body.y][body.x] = 1
-        screen[self.food.position.y][self.food.position.x] = 0
+            screen[body.y, body.x] = 1
+        screen[self.food.position.y, self.food.position.x] = 0
         return screen
