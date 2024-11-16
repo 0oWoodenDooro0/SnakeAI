@@ -1,8 +1,10 @@
-import random
 from collections import namedtuple
 from enum import IntEnum
 
 import pygame
+
+from food import Food
+from snake import Snake
 
 pygame.init()
 font = pygame.font.Font('arial.ttf', 25)
@@ -66,7 +68,7 @@ class Game:
 
         reward = 0.1
         game_over = False
-        if self.snake.is_collision() or self.steps > 20 * pow(len(self.snake.position), 1.2):
+        if self.snake.is_collision():
             game_over = True
             reward = 0
             return reward, game_over, self.score, self.steps
@@ -99,7 +101,7 @@ class Game:
         self.snake.move(new_dir)
 
         game_over = False
-        if self.snake.is_collision() or self.steps > 20 * pow(len(self.snake.position), 1.2):
+        if self.snake.is_collision():
             game_over = True
             fitness = self.fitness()
             return fitness, game_over, self.score, self.steps
@@ -152,49 +154,53 @@ class Game:
     def update_ui(self):
         self.display.fill(WHITE)
 
-        pygame.draw.rect(self.display, BLUE1, pygame.Rect(self.snake.head.x, self.snake.head.y, BLOCK_SIZE, BLOCK_SIZE))
+        pygame.draw.rect(self.display, BLUE1,
+                         pygame.Rect(self.snake.head.x * BLOCK_SIZE, self.snake.head.y * BLOCK_SIZE, BLOCK_SIZE,
+                                     BLOCK_SIZE))
         for pt in self.snake.position[1:]:
             pygame.draw.rect(self.display, BLUE2,
-                             pygame.Rect(pt.x + EDGE, pt.y + EDGE, BLOCK_SIZE - 2 * EDGE, BLOCK_SIZE - 2 * EDGE))
+                             pygame.Rect(pt.x * BLOCK_SIZE + EDGE, pt.y * BLOCK_SIZE + EDGE, BLOCK_SIZE - 2 * EDGE,
+                                         BLOCK_SIZE - 2 * EDGE))
 
         pygame.draw.rect(self.display, RED,
-                         pygame.Rect(self.food.position.x, self.food.position.y, BLOCK_SIZE, BLOCK_SIZE))
-        pygame.draw.line(self.display, BLACK,
-                         (self.snake.head.x + BLOCK_SIZE // 2, self.snake.head.y + BLOCK_SIZE // 2),
-                         (WEIGHT, self.snake.head.y + BLOCK_SIZE // 2))
-        pygame.draw.line(self.display, BLACK,
-                         (self.snake.head.x + BLOCK_SIZE // 2, self.snake.head.y + BLOCK_SIZE // 2),
-                         (self.snake.head.x + BLOCK_SIZE // 2, HEIGHT))
-        pygame.draw.line(self.display, BLACK,
-                         (self.snake.head.x + BLOCK_SIZE // 2, self.snake.head.y + BLOCK_SIZE // 2),
-                         (0, self.snake.head.y + BLOCK_SIZE // 2))
-        pygame.draw.line(self.display, BLACK,
-                         (self.snake.head.x + BLOCK_SIZE // 2, self.snake.head.y + BLOCK_SIZE // 2),
-                         (self.snake.head.x + BLOCK_SIZE // 2, 0))
-        pygame.draw.line(self.display, BLACK,
-                         (self.snake.head.x + BLOCK_SIZE // 2, self.snake.head.y + BLOCK_SIZE // 2),
-                         (self.snake.head.x + WEIGHT + BLOCK_SIZE // 2, self.snake.head.y - HEIGHT + BLOCK_SIZE // 2))
-        pygame.draw.line(self.display, BLACK,
-                         (self.snake.head.x + BLOCK_SIZE // 2, self.snake.head.y + BLOCK_SIZE // 2),
-                         (self.snake.head.x - WEIGHT + BLOCK_SIZE // 2, self.snake.head.y - HEIGHT + BLOCK_SIZE // 2))
-        pygame.draw.line(self.display, BLACK,
-                         (self.snake.head.x + BLOCK_SIZE // 2, self.snake.head.y + BLOCK_SIZE // 2),
-                         (self.snake.head.x - WEIGHT + BLOCK_SIZE // 2, self.snake.head.y + HEIGHT + BLOCK_SIZE // 2))
-        pygame.draw.line(self.display, BLACK,
-                         (self.snake.head.x + BLOCK_SIZE // 2, self.snake.head.y + BLOCK_SIZE // 2),
-                         (self.snake.head.x + WEIGHT + BLOCK_SIZE // 2, self.snake.head.y + HEIGHT + BLOCK_SIZE // 2))
+                         pygame.Rect(self.food.position.x * BLOCK_SIZE, self.food.position.y * BLOCK_SIZE, BLOCK_SIZE,
+                                     BLOCK_SIZE))
+        # pygame.draw.line(self.display, BLACK,
+        #                  (self.snake.head.x + BLOCK_SIZE // 2, self.snake.head.y + BLOCK_SIZE // 2),
+        #                  (WEIGHT, self.snake.head.y + BLOCK_SIZE // 2))
+        # pygame.draw.line(self.display, BLACK,
+        #                  (self.snake.head.x + BLOCK_SIZE // 2, self.snake.head.y + BLOCK_SIZE // 2),
+        #                  (self.snake.head.x + BLOCK_SIZE // 2, HEIGHT))
+        # pygame.draw.line(self.display, BLACK,
+        #                  (self.snake.head.x + BLOCK_SIZE // 2, self.snake.head.y + BLOCK_SIZE // 2),
+        #                  (0, self.snake.head.y + BLOCK_SIZE // 2))
+        # pygame.draw.line(self.display, BLACK,
+        #                  (self.snake.head.x + BLOCK_SIZE // 2, self.snake.head.y + BLOCK_SIZE // 2),
+        #                  (self.snake.head.x + BLOCK_SIZE // 2, 0))
+        # pygame.draw.line(self.display, BLACK,
+        #                  (self.snake.head.x + BLOCK_SIZE // 2, self.snake.head.y + BLOCK_SIZE // 2),
+        #                  (self.snake.head.x + WEIGHT + BLOCK_SIZE // 2, self.snake.head.y - HEIGHT + BLOCK_SIZE // 2))
+        # pygame.draw.line(self.display, BLACK,
+        #                  (self.snake.head.x + BLOCK_SIZE // 2, self.snake.head.y + BLOCK_SIZE // 2),
+        #                  (self.snake.head.x - WEIGHT + BLOCK_SIZE // 2, self.snake.head.y - HEIGHT + BLOCK_SIZE // 2))
+        # pygame.draw.line(self.display, BLACK,
+        #                  (self.snake.head.x + BLOCK_SIZE // 2, self.snake.head.y + BLOCK_SIZE // 2),
+        #                  (self.snake.head.x - WEIGHT + BLOCK_SIZE // 2, self.snake.head.y + HEIGHT + BLOCK_SIZE // 2))
+        # pygame.draw.line(self.display, BLACK,
+        #                  (self.snake.head.x + BLOCK_SIZE // 2, self.snake.head.y + BLOCK_SIZE // 2),
+        #                  (self.snake.head.x + WEIGHT + BLOCK_SIZE // 2, self.snake.head.y + HEIGHT + BLOCK_SIZE // 2))
 
-        for i in range(8):
-            food = self.collision(i, 'food', draw=True)
-            snake = self.collision(i, 'snake', draw=True)
-            if food:
-                pygame.draw.line(self.display, RED,
-                                 (self.snake.head.x + BLOCK_SIZE // 2, self.snake.head.y + BLOCK_SIZE // 2),
-                                 (food.x + BLOCK_SIZE // 2, food.y + BLOCK_SIZE // 2))
-            if snake:
-                pygame.draw.line(self.display, BLUE2,
-                                 (self.snake.head.x + BLOCK_SIZE // 2, self.snake.head.y + BLOCK_SIZE // 2),
-                                 (snake.x + BLOCK_SIZE // 2, snake.y + BLOCK_SIZE // 2))
+        # for i in range(8):
+        #     food = self.collision(i, 'food', draw=True)
+        #     snake = self.collision(i, 'snake', draw=True)
+        #     if food:
+        #         pygame.draw.line(self.display, RED,
+        #                          (self.snake.head.x + BLOCK_SIZE // 2, self.snake.head.y + BLOCK_SIZE // 2),
+        #                          (food.x + BLOCK_SIZE // 2, food.y + BLOCK_SIZE // 2))
+        #     if snake:
+        #         pygame.draw.line(self.display, BLUE2,
+        #                          (self.snake.head.x + BLOCK_SIZE // 2, self.snake.head.y + BLOCK_SIZE // 2),
+        #                          (snake.x + BLOCK_SIZE // 2, snake.y + BLOCK_SIZE // 2))
 
         text = font.render('Score: ' + str(self.score), True, BLACK)
         self.display.blit(text, [0, 0])
@@ -205,35 +211,35 @@ class Game:
         n = 1
         while not self.snake.is_collision(pt):
             if direction == 0:
-                pt = Point(pt.x - BLOCK_SIZE, pt.y)
+                pt = Point(pt.x - 1, pt.y)
             elif direction == 1:
-                pt = Point(pt.x, pt.y + BLOCK_SIZE)
+                pt = Point(pt.x, pt.y + 1)
             elif direction == 2:
-                pt = Point(pt.x + BLOCK_SIZE, pt.y)
+                pt = Point(pt.x + 1, pt.y)
             elif direction == 3:
-                pt = Point(pt.x, pt.y - BLOCK_SIZE)
+                pt = Point(pt.x, pt.y - 1)
             elif direction == 4:
-                pt = Point(pt.x - BLOCK_SIZE, pt.y + BLOCK_SIZE)
+                pt = Point(pt.x - 1, pt.y + 1)
             elif direction == 5:
-                pt = Point(pt.x + BLOCK_SIZE, pt.y + BLOCK_SIZE)
+                pt = Point(pt.x + 1, pt.y + 1)
             elif direction == 6:
-                pt = Point(pt.x + BLOCK_SIZE, pt.y - BLOCK_SIZE)
+                pt = Point(pt.x + 1, pt.y - 1)
             elif direction == 7:
-                pt = Point(pt.x - BLOCK_SIZE, pt.y - BLOCK_SIZE)
+                pt = Point(pt.x - 1, pt.y - 1)
             if obj == 'snake':
                 for p in self.snake.position:
                     if p == pt:
                         if draw:
                             return pt
-                        return (BLOCK_SIZE - n - 1) / (BLOCK_SIZE - 1)
+                        return (W - n - 1) / (W - 1)
             elif obj == 'food':
                 if pt == self.food.position:
                     if draw:
                         return pt
-                    return (BLOCK_SIZE - n - 1) / (BLOCK_SIZE - 1)
+                    return (W - n - 1) / (W - 1)
             elif obj == 'wall':
-                if pt.x > WEIGHT - BLOCK_SIZE or pt.x < 0 or pt.y > HEIGHT - BLOCK_SIZE or pt.y < 0:
-                    return n / (BLOCK_SIZE - 1)
+                if pt.x > W or pt.x < 0 or pt.y > H or pt.y < 0:
+                    return n / (W - 1)
             n += 1
         return 0
 
@@ -260,76 +266,27 @@ class Game:
     def check_danger(self, direction):
         match direction:
             case Direction.RIGHT:
-                if self.snake.head.x > WEIGHT - BLOCK_SIZE: return True
+                if self.snake.head.x > W:
+                    return True
                 for body in self.snake.position:
-                    if Point(self.snake.head.x + BLOCK_SIZE, self.snake.head.y) == body:
+                    if Point(self.snake.head.x + 1, self.snake.head.y) == body:
                         return True
             case Direction.LEFT:
-                if self.snake.head.x < 0: return True
+                if self.snake.head.x < 0:
+                    return True
                 for body in self.snake.position:
-                    if Point(self.snake.head.x - BLOCK_SIZE, self.snake.head.y) == body:
+                    if Point(self.snake.head.x - 1, self.snake.head.y) == body:
                         return True
             case Direction.DOWN:
-                if self.snake.head.y > HEIGHT - BLOCK_SIZE: return True
+                if self.snake.head.y > H:
+                    return True
                 for body in self.snake.position:
-                    if Point(self.snake.head.x, self.snake.head.y + BLOCK_SIZE) == body:
+                    if Point(self.snake.head.x, self.snake.head.y + 1) == body:
                         return True
             case Direction.UP:
-                if self.snake.head.y < 0: return True
+                if self.snake.head.y < 0:
+                    return True
                 for body in self.snake.position:
-                    if Point(self.snake.head.x, self.snake.head.y - BLOCK_SIZE) == body:
+                    if Point(self.snake.head.x, self.snake.head.y - 1) == body:
                         return True
         return False
-
-
-class Snake:
-    def __init__(self):
-        self.position = None
-        self.head = None
-        self.direction = None
-
-    def reset(self):
-        self.direction = Direction.RIGHT
-        self.head = Point(WEIGHT / 2, HEIGHT / 2)
-        self.position = [self.head]
-
-    def move(self, direction=None):
-        if direction is None:
-            direction = self.direction
-        self.direction = direction
-        x = self.head.x
-        y = self.head.y
-
-        if direction == Direction.RIGHT:
-            x += BLOCK_SIZE
-        elif direction == Direction.LEFT:
-            x -= BLOCK_SIZE
-        elif direction == Direction.UP:
-            y -= BLOCK_SIZE
-        elif direction == Direction.DOWN:
-            y += BLOCK_SIZE
-
-        self.head = Point(x, y)
-        self.position.insert(0, self.head)
-
-    def is_collision(self, pt=None):
-        if pt is None:
-            pt = self.head
-        if pt.x > WEIGHT - BLOCK_SIZE or pt.x < 0 or pt.y > HEIGHT - BLOCK_SIZE or pt.y < 0:
-            return True
-        if pt in self.position[1:]:
-            return True
-        return False
-
-
-class Food:
-    def __init__(self):
-        self.position = None
-
-    def place(self, snake):
-        while True:
-            x = random.randint(0, (WEIGHT - BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE
-            y = random.randint(0, (HEIGHT - BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE
-            if Point(x, y) not in snake:
-                self.position = Point(x, y)
-                break

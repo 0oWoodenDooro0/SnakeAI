@@ -1,10 +1,13 @@
 import agent
+from game import Game
 
 match (input()):
     case "train":
         agent.play()
     case "play":
-        agent.play(True, False)
+        game = Game()
+        while True:
+            game.human_step()
     case "show":
         agent.play(True, True)
     case "init":

@@ -1,4 +1,6 @@
-from game import Snake, Food, Direction, Point, BLOCK_SIZE, WEIGHT, HEIGHT
+from food import Food
+from game import Direction, Point, BLOCK_SIZE, W, H
+from snake import Snake
 
 
 class GameTrainer:
@@ -28,7 +30,7 @@ class GameTrainer:
 
         reward = 0.1
         game_over = False
-        if self.snake.is_collision() or self.steps > 20 * pow(len(self.snake.position), 1.2):
+        if self.snake.is_collision():
             game_over = True
             reward = 0
             return reward, game_over, self.score, self.steps
@@ -54,7 +56,7 @@ class GameTrainer:
         self.snake.move(new_dir)
 
         game_over = False
-        if self.snake.is_collision() or self.steps > 20 * pow(len(self.snake.position), 1.2):
+        if self.snake.is_collision():
             game_over = True
             fitness = self.fitness()
             return fitness, game_over, self.score, self.steps
@@ -77,31 +79,31 @@ class GameTrainer:
         n = 1
         while not self.snake.is_collision(pt):
             if direction == 0:
-                pt = Point(pt.x - BLOCK_SIZE, pt.y)
+                pt = Point(pt.x - 1, pt.y)
             elif direction == 1:
-                pt = Point(pt.x, pt.y + BLOCK_SIZE)
+                pt = Point(pt.x, pt.y + 1)
             elif direction == 2:
-                pt = Point(pt.x + BLOCK_SIZE, pt.y)
+                pt = Point(pt.x + 1, pt.y)
             elif direction == 3:
-                pt = Point(pt.x, pt.y - BLOCK_SIZE)
+                pt = Point(pt.x, pt.y - 1)
             elif direction == 4:
-                pt = Point(pt.x - BLOCK_SIZE, pt.y + BLOCK_SIZE)
+                pt = Point(pt.x - 1, pt.y + 1)
             elif direction == 5:
-                pt = Point(pt.x + BLOCK_SIZE, pt.y + BLOCK_SIZE)
+                pt = Point(pt.x + 1, pt.y + 1)
             elif direction == 6:
-                pt = Point(pt.x + BLOCK_SIZE, pt.y - BLOCK_SIZE)
+                pt = Point(pt.x + 1, pt.y - 1)
             elif direction == 7:
-                pt = Point(pt.x - BLOCK_SIZE, pt.y - BLOCK_SIZE)
+                pt = Point(pt.x - 1, pt.y - 1)
             if obj == 'snake':
                 for p in self.snake.position:
                     if p == pt:
-                        return (BLOCK_SIZE - n - 1) / (BLOCK_SIZE - 1)
+                        return (W - n - 1) / (W - 1)
             elif obj == 'food':
                 if pt == self.food.position:
-                    return (BLOCK_SIZE - n - 1) / (BLOCK_SIZE - 1)
+                    return (W - n - 1) / (W - 1)
             elif obj == 'wall':
-                if pt.x > WEIGHT - BLOCK_SIZE or pt.x < 0 or pt.y > HEIGHT - BLOCK_SIZE or pt.y < 0:
-                    return n / (BLOCK_SIZE - 1)
+                if pt.x > W or pt.x < 0 or pt.y > H or pt.y < 0:
+                    return n / (W - 1)
             n += 1
         return 0
 
@@ -110,44 +112,41 @@ class GameTrainer:
             case Direction.RIGHT:
                 if self.food.position.x > self.snake.head.x:
                     return True
-                else:
-                    return False
             case Direction.LEFT:
                 if self.food.position.x < self.snake.head.x:
                     return True
-                else:
-                    return False
             case Direction.DOWN:
                 if self.food.position.y > self.snake.head.y:
                     return True
-                else:
-                    return False
             case Direction.UP:
                 if self.food.position.y < self.snake.head.y:
                     return True
-                else:
-                    return False
+        return False
 
     def check_danger(self, direction):
         match direction:
             case Direction.RIGHT:
-                if self.snake.head.x > WEIGHT - BLOCK_SIZE: return True
+                if self.snake.head.x > W:
+                    return True
                 for body in self.snake.position:
-                    if Point(self.snake.head.x + BLOCK_SIZE, self.snake.head.y) == body:
+                    if Point(self.snake.head.x + 1, self.snake.head.y) == body:
                         return True
             case Direction.LEFT:
-                if self.snake.head.x < 0: return True
+                if self.snake.head.x < 0:
+                    return True
                 for body in self.snake.position:
-                    if Point(self.snake.head.x - BLOCK_SIZE, self.snake.head.y) == body:
+                    if Point(self.snake.head.x - 1, self.snake.head.y) == body:
                         return True
             case Direction.DOWN:
-                if self.snake.head.y > HEIGHT - BLOCK_SIZE: return True
+                if self.snake.head.y > H:
+                    return True
                 for body in self.snake.position:
-                    if Point(self.snake.head.x, self.snake.head.y + BLOCK_SIZE) == body:
+                    if Point(self.snake.head.x, self.snake.head.y + 1) == body:
                         return True
             case Direction.UP:
-                if self.snake.head.y < 0: return True
+                if self.snake.head.y < 0:
+                    return True
                 for body in self.snake.position:
-                    if Point(self.snake.head.x, self.snake.head.y - BLOCK_SIZE) == body:
+                    if Point(self.snake.head.x, self.snake.head.y - 1) == body:
                         return True
         return False

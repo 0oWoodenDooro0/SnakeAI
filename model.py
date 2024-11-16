@@ -37,7 +37,7 @@ model_file_path = 'objects/model.weights.h5'
 def get_model():
     model = keras.Sequential()
     model.add(layers.Input(shape=(12,)))
-    model.add(layers.Dense(units=16, activation='relu'))
+    model.add(layers.Dense(units=6, activation='relu'))
     model.add(layers.Dense(units=3, activation='relu'))
     adam = optimizers.Adam(learning_rate=1e-4)
     model.compile(loss='mse', optimizer=adam)

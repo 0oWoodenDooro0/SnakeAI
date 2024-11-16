@@ -236,14 +236,17 @@ q_values_file_path = 'objects/q_values.csv'
 
 ACTIONS = 3
 GAMMA = 0.99
-OBSERVATION = 500
-EXPLORE = 10000
+OBSERVATION = 50
+EXPLORE = 100000
 FINAL_EPSILON = 0.0001
 INITIAL_EPSILON = 0.1
 REPLAY_MEMORY_SIZE = 50000
 BATCH_SIZE = 16
 FRAMES_PER_ACTION = 1
-LEARNING_RATE = 1e-4
+LEARNING_RATE = 1e-3
+
+img_rows, img_cols = 10, 10
+img_channels = 2
 
 loss_df = pd.read_csv(loss_file_path) if os.path.isfile(loss_file_path) else pd.DataFrame(columns=['loss'])
 scores_df = pd.read_csv(scores_file_path) if os.path.isfile(loss_file_path) else pd.DataFrame(columns=['scores'])
@@ -302,8 +305,8 @@ def train(model: keras.Sequential, game_state: GameState, observe=False):
                 a_t[action_index] = 1
             else:
                 q = model.predict(s_t)
-                max_Q = np.argmax(q)
-                action_index = max_Q
+                max_q = np.argmax(q)
+                action_index = max_q
                 a_t[action_index] = 1
 
         if epsilon > FINAL_EPSILON and t > OBSERVE:
@@ -339,6 +342,8 @@ def train(model: keras.Sequential, game_state: GameState, observe=False):
             q_values_df.loc[len(q_values_df)] = np.max(Q_sa)
             scores_df.loc[len(scores_df)] = score
 
+        if steps > 20 * (t / 1000 + 1):
+            terminal = True
         s_t = initial_state if terminal else s_t1
         f_t = 0 if terminal else f_t1
         if terminal:
@@ -364,7 +369,7 @@ def train(model: keras.Sequential, game_state: GameState, observe=False):
             state = "train"
 
         print("TIMESTEP", t, "/ STATE", state, "/ EPSILON", epsilon, "/ ACTION", action_index, "/ fitness", f_t1,
-              "/ score", score, "/ Q_MAX ", "/ steps", steps, np.max(Q_sa), "/ Loss ", loss)
+              "/ score", score, "/ steps", steps, "/ Q_MAX ", np.max(Q_sa), "/ Loss ", loss)
 
 
 def play(show=False, observe=False):
