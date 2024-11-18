@@ -36,13 +36,13 @@ model_file_path = 'objects/model.weights.h5'
 
 def get_model():
     model = keras.Sequential()
-    model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(20, 20, 2)))
-    model.add(layers.MaxPooling2D((2, 2)))
-    model.add(layers.Conv2D(64, (2, 2), activation='relu'))
-    model.add(layers.MaxPooling2D((2, 2)))
+    model.add(layers.Input(shape=(20, 20, 4)))
+    model.add(layers.Conv2D(32, 8, strides=4, padding='same'))
+    model.add(layers.Conv2D(64, 4, strides=2, padding='same'))
+    model.add(layers.Conv2D(64, 2, strides=1, padding='same'))
     model.add(layers.Flatten())
-    model.add(layers.Dense(units=64, activation='relu'))
-    model.add(layers.Dense(units=3))
+    model.add(layers.Dense(units=64))
+    model.add(layers.Dense(units=3, activation='linear'))
     adam = optimizers.Adam(learning_rate=1e-4)
     model.compile(loss='mse', optimizer=adam)
     if not os.path.isfile(model_file_path):

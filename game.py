@@ -8,7 +8,6 @@ from point import Point
 from snake import Snake
 
 pygame.init()
-font = pygame.font.Font('arial.ttf', 25)
 
 WHITE = (255, 255, 255)
 RED = (200, 0, 0)
@@ -24,6 +23,7 @@ SPEED = 20
 
 class Game:
     def __init__(self):
+        self.font = pygame.font.Font('arial.ttf', 25)
         self.score = 0
         self.steps = 0
         self.display = pygame.display.set_mode((WEIGHT, HEIGHT))
@@ -190,7 +190,7 @@ class Game:
         #                          (self.snake.head.x + BLOCK_SIZE // 2, self.snake.head.y + BLOCK_SIZE // 2),
         #                          (snake.x + BLOCK_SIZE // 2, snake.y + BLOCK_SIZE // 2))
 
-        text = font.render('Score: ' + str(self.score), True, BLACK)
+        text = self.font.render('Score: ' + str(self.score), True, BLACK)
         self.display.blit(text, [0, 0])
         pygame.display.flip()
 

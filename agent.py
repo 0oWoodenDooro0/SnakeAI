@@ -177,8 +177,11 @@
 #         print(f'Generation: {generations} Top_Score: {np.floor(fitness[0])}')
 #         generations += 1
 #
-import json
 import os
+
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+
+import json
 import pickle
 import random
 from collections import deque
@@ -190,13 +193,12 @@ import pandas as pd
 
 from enviroment import H, W
 from game import Game
-from direction import Direction
 from gameTrainer import GameTrainer
 from model import get_model
 
 
 class Agent:
-    def __init__(self, game: Game | GameTrainer):
+    def __init__(self, game):
         self.game = game
 
     def action(self, action):
@@ -239,17 +241,17 @@ q_values_file_path = 'objects/q_values.csv'
 
 ACTIONS = 3
 GAMMA = 0.99
-OBSERVATION = 128
+OBSERVATION = 16
 EXPLORE = 100000
 FINAL_EPSILON = 0.0001
-INITIAL_EPSILON = 0.1
+INITIAL_EPSILON = 0.5
 REPLAY_MEMORY_SIZE = 50000
-BATCH_SIZE = 128
+BATCH_SIZE = 16
 FRAMES_PER_ACTION = 1
 LEARNING_RATE = 1e-3
 
 img_rows, img_cols = H, W
-img_channels = 2
+img_channels = 4
 
 loss_df = pd.read_csv(loss_file_path) if os.path.isfile(loss_file_path) else pd.DataFrame(columns=['loss'])
 scores_df = pd.read_csv(scores_file_path) if os.path.isfile(loss_file_path) else pd.DataFrame(columns=['scores'])
@@ -281,7 +283,7 @@ def train(model: keras.Sequential, game_state: GameState, observe=False):
     do_nothing = np.zeros(ACTIONS)
     do_nothing[1] = 1
     x_t, _, terminal, score, steps = game_state.get_state(do_nothing)
-    s_t = np.stack((x_t, x_t), axis=2)
+    s_t = np.stack((x_t, x_t, x_t, x_t), axis=2)
     s_t = s_t.reshape(1, s_t.shape[0], s_t.shape[1], s_t.shape[2])
     initial_state = s_t
     best_score = 0
@@ -311,7 +313,7 @@ def train(model: keras.Sequential, game_state: GameState, observe=False):
                 action_index = random.randrange(ACTIONS)
                 a_t[action_index] = 1
             else:
-                q = model.predict(s_t, verbose=0)
+                q = model.predict(s_t)
                 max_q = np.argmax(q)
                 action_index = max_q
                 a_t[action_index] = 1
@@ -321,7 +323,7 @@ def train(model: keras.Sequential, game_state: GameState, observe=False):
 
         x_t1, r_t, terminal, score, steps = game_state.get_state(a_t)
         x_t1 = x_t1.reshape(1, x_t1.shape[0], x_t1.shape[1], 1)
-        s_t1 = np.append(x_t1, s_t[:, :, :, :1], axis=3)
+        s_t1 = np.append(x_t1, s_t[:, :, :, :3], axis=3)
         D.append((s_t, action_index, r_t, s_t1, terminal))
         if len(D) > REPLAY_MEMORY_SIZE:
             D.popleft()
@@ -340,8 +342,8 @@ def train(model: keras.Sequential, game_state: GameState, observe=False):
 
                 inputs[i:i + 1] = state_t
 
-                targets[i] = model.predict(state_t, verbose=0)
-                Q_sa = model.predict(state_t1, verbose=0)
+                targets[i] = model.predict(state_t)
+                Q_sa = model.predict(state_t1)
 
                 if terminal:
                     targets[i, action_t] = fitness_t
@@ -386,6 +388,11 @@ def train(model: keras.Sequential, game_state: GameState, observe=False):
 
             print("TIMESTEP", t, "/ STATE", state, "/ EPSILON", epsilon, "/ ACTION", action_index,
                   "/ best score", best_score, "/ best steps", best_steps, "/ Loss ", loss)
+
+            best_score = 0
+            best_steps = 0
+
+        print("TIMESTEP", t, "/ ACTION", action_index, "/ Loss", loss)
 
 
 def play(show=False, observe=False):
